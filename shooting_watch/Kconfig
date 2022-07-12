@@ -1,0 +1,25 @@
+
+config SPRESENSE_GAME_SHOOTING_WATCH
+	tristate "shooting_watch"
+	default y
+	---help---
+		Enable the shooting_watch app
+
+if SPRESENSE_GAME_SHOOTING_WATCH
+
+config SPRESENSE_GAME_SHOOTING_WATCH_PROGNAME
+	string "Program name"
+	default "shooting_watch"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config SPRESENSE_GAME_SHOOTING_WATCH_PRIORITY
+	int "shooting_watch task priority"
+	default 100
+
+config SPRESENSE_GAME_SHOOTING_WATCH_STACKSIZE
+	int "shooting_watch stack size"
+	default 2048
+
+endif

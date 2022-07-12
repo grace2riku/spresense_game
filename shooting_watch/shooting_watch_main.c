@@ -4,6 +4,6 @@
 
 int main(int argc, FAR char *argv[])
 {
-  printf("Hello, musical_chairs!!!\n");
+  printf("Hello, shooting_watch!!!\n");
   return 0;
 }

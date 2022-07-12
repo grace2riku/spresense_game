@@ -1,0 +1,4 @@
+
+ifneq ($(CONFIG_SPRESENSE_GAME_SHOOTING_WATCH),)
+CONFIGURED_APPS += shooting_watch
+endif
