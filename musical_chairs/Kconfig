@@ -1,0 +1,25 @@
+
+config SPRESENSE_GAME_MUSICAL_CHAIRS
+	tristate "musical_chairs"
+	default y
+	---help---
+		Enable the musical_chairs app
+
+if SPRESENSE_GAME_MUSICAL_CHAIRS
+
+config SPRESENSE_GAME_MUSICAL_CHAIRS_PROGNAME
+	string "Program name"
+	default "musical_chairs"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config SPRESENSE_GAME_MUSICAL_CHAIRS_PRIORITY
+	int "musical_chairs task priority"
+	default 100
+
+config SPRESENSE_GAME_MUSICAL_CHAIRS_STACKSIZE
+	int "musical_chairs stack size"
+	default 2048
+
+endif

@@ -1,0 +1,4 @@
+
+ifneq ($(CONFIG_SPRESENSE_GAME_MUSICAL_CHAIRS),)
+CONFIGURED_APPS += musical_chairs
+endif

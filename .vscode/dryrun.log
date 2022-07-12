@@ -1,0 +1,9 @@
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory `/Users/k-abe/spresense/spresense_game'
+make: Leaving directory `/Users/k-abe/spresense/spresense_game'
+ 
+Makefile:38: /tools/Sdk.mk: No such file or directory
+make: *** No rule to make target `/tools/Sdk.mk'.
+make: Failed to remake makefile `/tools/Sdk.mk'.
+make: *** No targets specified and no makefile found.  Stop.
+
