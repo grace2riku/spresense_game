@@ -1,0 +1,25 @@
+
+config SPRESENSE_GAME_ELECTRIC_GUITAR
+	tristate "electric_guitar"
+	default y
+	---help---
+		Enable the electric_guitar app
+
+if SPRESENSE_GAME_ELECTRIC_GUITAR
+
+config SPRESENSE_GAME_ELECTRIC_GUITAR_PROGNAME
+	string "Program name"
+	default "electric_guitar"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config SPRESENSE_GAME_ELECTRIC_GUITAR_PRIORITY
+	int "electric_guitar task priority"
+	default 100
+
+config SPRESENSE_GAME_ELECTRIC_GUITAR_STACKSIZE
+	int "electric_guitar stack size"
+	default 2048
+
+endif

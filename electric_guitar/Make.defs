@@ -1,0 +1,4 @@
+
+ifneq ($(CONFIG_SPRESENSE_GAME_ELECTRIC_GUITAR),)
+CONFIGURED_APPS += electric_guitar
+endif
