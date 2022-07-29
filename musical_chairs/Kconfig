@@ -1,25 +1,58 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
 
-config SPRESENSE_GAME_MUSICAL_CHAIRS
-	tristate "musical_chairs"
-	default y
+config EXAMPLES_AUDIO_PLAYER2
+	tristate "Audio player example"
+	default n
+	depends on CXD56_AUDIO
 	---help---
-		Enable the musical_chairs app
+		Enable the audio player example
 
-if SPRESENSE_GAME_MUSICAL_CHAIRS
+if EXAMPLES_AUDIO_PLAYER2
 
-config SPRESENSE_GAME_MUSICAL_CHAIRS_PROGNAME
+choice
+	prompt "Output device selection"
+	default EXAMPLES_AUDIO_PLAYER_OUTPUT_DEV_SPHP2
+	---help---
+		Set the device type of output to use
+
+config EXAMPLES_AUDIO_PLAYER_OUTPUT_DEV_SPHP2
+	bool "Speaker/Headphone output"
+
+config EXAMPLES_AUDIO_PLAYER_OUTPUT_DEV_I2S2
+	bool "I2S output"
+endchoice
+
+choice
+	prompt "player mode selection"
+	default EXAMPLES_AUDIO_PLAYER_MODE_NORMAL2
+	---help---
+		Set the operation mode of player capability.
+		To play include Hi-Res file, select Hi-Res mode.
+		If it is not Hi-Res file, select Normal mode.
+
+config EXAMPLES_AUDIO_PLAYER_MODE_NORMAL2
+	bool "Normal mode"
+
+config EXAMPLES_AUDIO_PLAYER_MODE_HIRES2
+	bool "Hi-Res mode"
+endchoice
+
+config EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2
+    bool "Use Posstprocess"
+    default n
+
+config EXAMPLES_AUDIO_PLAYER_PROGNAME2
 	string "Program name"
 	default "musical_chairs"
-	---help---
-		This is the name of the program that will be use when the NSH ELF
-		program is installed.
 
-config SPRESENSE_GAME_MUSICAL_CHAIRS_PRIORITY
-	int "musical_chairs task priority"
-	default 100
+config EXAMPLES_AUDIO_PLAYER_PRIORITY2
+	int "Audio player task priority"
+	default 150
 
-config SPRESENSE_GAME_MUSICAL_CHAIRS_STACKSIZE
-	int "musical_chairs stack size"
+config EXAMPLES_AUDIO_PLAYER_STACKSIZE2
+	int "Audio player stack size"
 	default 2048
-
 endif
