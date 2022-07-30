@@ -62,7 +62,7 @@
 #endif
 #ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2
 #include "userproc_command.h"
-#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2 */
 
 /* Section number of memory layout to use */
 
@@ -676,25 +676,25 @@ static bool app_set_player_status(void)
 {
     AudioCommand command;
     command.header.packet_length = LENGTH_SET_PLAYER_STATUS;
-#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2
     command.header.command_code = AUDCMD_SETPLAYERSTATUSPOST;
-#else /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
+#else /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2 */
     command.header.command_code = AUDCMD_SETPLAYERSTATUS;
-#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2 */
     command.header.sub_code = 0x00;
     command.set_player_sts_param.active_player         = AS_ACTPLAYER_MAIN;
     command.set_player_sts_param.player0.input_device  = AS_SETPLAYER_INPUTDEVICE_RAM;
     command.set_player_sts_param.player0.ram_handler   = &s_player_info.fifo.input_device;
     command.set_player_sts_param.player0.output_device = PLAYER_OUTPUT_DEV;
-#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2
     command.set_player_sts_param.post0_enable          = PostFilterEnable;
-#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2 */
     command.set_player_sts_param.player1.input_device  = 0x00;
     command.set_player_sts_param.player1.ram_handler   = NULL;
     command.set_player_sts_param.player1.output_device = 0x00;
-#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2
     command.set_player_sts_param.post1_enable          = PostFilterDisable;
-#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2 */
     AS_SendAudioCommand(&command);
 
     AudioResult result;
@@ -777,11 +777,11 @@ static bool app_init_outputmixer(void)
   command.header.command_code  = AUDCMD_INIT_OUTPUTMIXER;
   command.header.sub_code      = 0x00;
   command.init_mixer_param.player_id     = AS_PLAYER_ID_0;
-#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2
   command.init_mixer_param.postproc_type = AsPostprocTypeUserCustom;
-#else /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
+#else /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2 */
   command.init_mixer_param.postproc_type = AsPostprocTypeThrough;
-#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2 */
   snprintf(command.init_mixer_param.dsp_path,
            sizeof(command.init_mixer_param.dsp_path),
            "%s/POSTPROC", DSPBIN_FILE_PATH);
@@ -792,7 +792,7 @@ static bool app_init_outputmixer(void)
   return printAudCmdResult(command.header.command_code, result);
 }
 
-#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2
 static bool app_send_initpostproc_command(void)
 {
   InitParam initpostcmd;
@@ -838,7 +838,7 @@ static bool app_send_setpostproc_command(void)
   AS_ReceiveAudioResult(&result);
   return printAudCmdResult(command.header.command_code, result);
 }
-#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2 */
 
 static bool app_init_libraries(void)
 {
@@ -1091,14 +1091,14 @@ void app_play_process(uint32_t play_time)
           break;
         }
 
-#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2
       static int cnt = 0;
       if (cnt++ > 100)
         {
           app_send_setpostproc_command();
           cnt = 0;
         }
-#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2 */
 
     } while((time(&cur_time) - start_time) < play_time);
 }
@@ -1233,7 +1233,7 @@ extern "C" int main(int argc, FAR char *argv[])
        * play the next file.
        */
 
-#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_MODE_NORMAL
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_MODE_NORMAL2
       if (cur_clk_mode == AS_CLKMODE_HIRES)
         {
           printf("Hi-Res file is not supported.\n"
@@ -1312,7 +1312,7 @@ extern "C" int main(int argc, FAR char *argv[])
               goto errout_init_outputmixer;
             }
 
-#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2
           /* Init Postproc. */
 
           if (!app_send_initpostproc_command())
@@ -1321,7 +1321,7 @@ extern "C" int main(int argc, FAR char *argv[])
 
               goto errout_init_postproc;
             }
-#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2 */
 
            /* Cancel output mute. */
 
@@ -1388,9 +1388,9 @@ errout_set_ready_status:
 errout_set_clkmode:
 errout_set_player_status:
 errout_init_outputmixer:
-#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2
 errout_init_postproc:
-#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2 */
 errout_amp_mute_control:
   if (AS_MNG_STATUS_READY != app_get_status())
     {
