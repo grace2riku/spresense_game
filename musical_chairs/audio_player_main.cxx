@@ -103,7 +103,7 @@ using namespace MemMgrLite;
 
 /* Play time(sec) */
 
-#define PLAYER_PLAY_TIME 10
+#define PLAYER_PLAY_TIME (600)
 
 /* Play file number */
 
@@ -240,10 +240,15 @@ struct player_info_s
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
+extern "C" {
+extern int gpio_init(void);
+}
 
 /****************************************************************************
  * Public Data
  ****************************************************************************/
+extern bool play_or_pause_trigger;
+extern bool exit_app;
 
 /****************************************************************************
  * Private Data
@@ -1100,8 +1105,18 @@ void app_play_process(uint32_t play_time)
         }
 #endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2 */
 
+      if (exit_app) {
+        break;
+      }
+
+      if (play_or_pause_trigger) {
+        play_or_pause_trigger = false;
+        break;
+      }
+
     } while((time(&cur_time) - start_time) < play_time);
 }
+
 
 /****************************************************************************
  * Public Functions
@@ -1109,6 +1124,8 @@ void app_play_process(uint32_t play_time)
 
 extern "C" int main(int argc, FAR char *argv[])
 {
+  gpio_init();
+
   /* Initialize clock mode.
    * Clock mode indicates whether the internal processing rate of
    * AudioSubSystem is Normal mode or Hi-Res mode. 
@@ -1205,7 +1222,7 @@ extern "C" int main(int argc, FAR char *argv[])
       goto errout_init_output_select;
     }
 
-  for (int i = 0; i < PLAYER_PLAY_FILE_NUM; i++)
+  for (;;)
     {
       if (!app_open_next_play_file())
         {
@@ -1362,6 +1379,10 @@ extern "C" int main(int argc, FAR char *argv[])
           return 1;
         }
 
+      if (exit_app) {
+        exit_app = false;
+        break;
+      }
 #ifndef CONFIG_AUDIOUTILS_PLAYLIST
       break;
 #endif
