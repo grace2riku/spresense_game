@@ -18,9 +18,11 @@ bool exit_app = false;
 static int gpio_switch_1_handler(int irq, FAR void *context, FAR void *arg)
 {
   int sw1_status = board_gpio_read(SWITCH_1);
+  int sw2_status = board_gpio_read(SWITCH_2);
+
   board_gpio_write(USER_LED_1, sw1_status);
 
-  if (!sw1_status) exit_app = true;
+  if (!sw1_status && !sw2_status) exit_app = true;
 
   return 0;
 }
@@ -28,9 +30,11 @@ static int gpio_switch_1_handler(int irq, FAR void *context, FAR void *arg)
 static int gpio_switch_2_handler(int irq, FAR void *context, FAR void *arg)
 {
   int sw2_status = board_gpio_read(SWITCH_2);
+  int sw1_status = board_gpio_read(SWITCH_1);
   board_gpio_write(USER_LED_2, sw2_status);
 
   if (!sw2_status) play_or_pause_trigger = true;
+  if (!sw1_status && !sw2_status) exit_app = true;
 
   return 0;
 }
