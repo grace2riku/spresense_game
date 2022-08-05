@@ -39,14 +39,33 @@ static int gpio_switch_2_handler(int irq, FAR void *context, FAR void *arg)
   return 0;
 }
 
-int gpio_init(void)
+void gpio_create(void)
 {
   /* 割り込み設定 */
   board_gpio_intconfig(SWITCH_1, INT_BOTH_EDGE,    true, gpio_switch_1_handler); 
   board_gpio_intconfig(SWITCH_2, INT_BOTH_EDGE,    true, gpio_switch_2_handler); 
 
-  board_gpio_int(SWITCH_1, true);  
-  board_gpio_int(SWITCH_2, true);  
+  if (board_gpio_int(SWITCH_1, true) < 0) { 
+    message("gpio_create board_gpio_int(switch_1) failure.\n");
+  }
 
-  return 0;
+  if (board_gpio_int(SWITCH_2, true) < 0) {
+    message("gpio_create board_gpio_int(switch_2) failure.\n");
+  }  
+
+  return;
+}
+
+
+void gpio_destroy(void)
+{
+  if (board_gpio_int(SWITCH_1, false) < 0) { 
+    message("gpio_destroy board_gpio_int(switch_1) failure.\n");
+  }
+
+  if (board_gpio_int(SWITCH_2, false) < 0) {
+    message("gpio_destroy board_gpio_int(switch_2) failure.\n");
+  }  
+
+  return;
 }

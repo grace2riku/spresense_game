@@ -241,7 +241,8 @@ struct player_info_s
  * Public Function Prototypes
  ****************************************************************************/
 extern "C" {
-extern int gpio_init(void);
+extern void gpio_create(void);
+extern void gpio_destroy(void);
 }
 
 /****************************************************************************
@@ -1124,7 +1125,7 @@ void app_play_process(uint32_t play_time)
 
 extern "C" int main(int argc, FAR char *argv[])
 {
-  gpio_init();
+  gpio_create();
 
   /* Initialize clock mode.
    * Clock mode indicates whether the internal processing rate of
@@ -1355,7 +1356,6 @@ extern "C" int main(int argc, FAR char *argv[])
         }
 
       /* Start player operation. */
-
       if (!app_start())
         {
           printf("Error: app_start_player() failure.\n");
@@ -1372,7 +1372,6 @@ extern "C" int main(int argc, FAR char *argv[])
       app_play_process(PLAYER_PLAY_TIME);
 
       /* Stop player operation. */
-
       if (!app_stop())
         {
           printf("Error: app_stop() failure.\n");
@@ -1466,6 +1465,8 @@ errout_act_audio_sub_system:
       printf("Error: finalize_libraries() failure.\n");
       return 1;
     }
+
+  gpio_destroy();
 
   printf("Exit AudioPlayer example\n");
 
