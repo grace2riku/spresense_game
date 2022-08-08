@@ -237,6 +237,24 @@ struct player_info_s
 #endif
 };
 
+typedef enum
+{
+    STOP,
+    PLAY,
+    PAUSE,
+    END
+} GAME_STATE;
+
+typedef enum
+{
+    NONE,
+    MUSIC_PAUSE,
+    MUSIC_END,
+    END_REQUEST,
+    ERROR_HAPPEN
+} GAME_EVENT;
+
+
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
@@ -456,7 +474,7 @@ static bool app_first_push_simple_fifo(int fd)
   return (ret != FIFO_RESULT_ERR) ? true : false;
 }
 
-static bool app_refill_simple_fifo(int fd)
+static bool app_refill_simple_fifo(int fd, int* fifo_state_result)
 {
   int32_t ret = FIFO_RESULT_OK;
   size_t  vacant_size;
@@ -479,6 +497,7 @@ static bool app_refill_simple_fifo(int fd)
         }
     }
 
+  *fifo_state_result = ret;
   return (ret == FIFO_RESULT_OK) ? true : false;
 }
 
@@ -1051,6 +1070,21 @@ static bool app_start(void)
   return true;
 }
 
+
+static bool replay(void)
+{
+  /* Play Player */
+  if (!app_play_player())
+    {
+      printf("Error: app_play_player() failure.\n");
+      app_close_play_file();
+      return false;
+    }
+
+  return true;
+}
+
+
 static bool app_stop(void)
 {
   bool result = true;
@@ -1079,11 +1113,29 @@ static bool app_stop(void)
   return result;
 }
 
-void app_play_process(uint32_t play_time)
+
+static bool app_pause(void)
+{
+  bool result = true;
+
+  int  stop_mode = AS_STOPPLAYER_NORMAL;
+
+  if (!app_stop_player(stop_mode))
+    {
+      printf("Error: app_stop_player() failure.\n");
+      result = false;
+    }
+
+  return result;
+}
+
+
+void app_play_process(uint32_t play_time, GAME_EVENT* p_game_event)
 {
   /* Timer Start */
   time_t start_time;
   time_t cur_time;
+  int fifo_state_result;
 
   time(&start_time);
 
@@ -1092,9 +1144,14 @@ void app_play_process(uint32_t play_time)
       /* Check the FIFO every 2 ms and fill if there is space. */
 
       usleep(2 * 1000);
-      if (!app_refill_simple_fifo(s_player_info.file.fd))
+      if (!app_refill_simple_fifo(s_player_info.file.fd, &fifo_state_result))
         {
-          break;
+          if (fifo_state_result == FIFO_RESULT_EOF) {
+            *p_game_event = MUSIC_END;
+          } else {
+            *p_game_event = ERROR_HAPPEN;
+          }
+          return;
         }
 
 #ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2
@@ -1107,15 +1164,12 @@ void app_play_process(uint32_t play_time)
 #endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2 */
 
       if (exit_app) {
-        break;
-      }
-
-      if (play_or_pause_trigger) {
-        play_or_pause_trigger = false;
-        break;
+        *p_game_event = END_REQUEST;
+        return;
       }
 
     } while((time(&cur_time) - start_time) < play_time);
+    *p_game_event = MUSIC_PAUSE;
 }
 
 
@@ -1126,6 +1180,11 @@ void app_play_process(uint32_t play_time)
 extern "C" int main(int argc, FAR char *argv[])
 {
   gpio_create();
+  GAME_STATE game_state = STOP;
+  GAME_EVENT game_event = NONE;
+  int music_play_time = 3;
+
+  srand((unsigned int)time(NULL));
 
   /* Initialize clock mode.
    * Clock mode indicates whether the internal processing rate of
@@ -1225,161 +1284,208 @@ extern "C" int main(int argc, FAR char *argv[])
 
   for (;;)
     {
-      if (!app_open_next_play_file())
-        {
-          /* Abnormal termination processing */
 
-          goto errout_open_next_play_file;
-        }
+      switch (game_state) {
+        case STOP:
+          if (play_or_pause_trigger) {
+            play_or_pause_trigger = false;
 
-      /* Get current clock mode.
-       * If the sampling rate is less than 48 kHz,
-       * it will be in Normal mode. Otherwise, Hi-Res mode is set.
-       */
+            printf("state:stop play_or_pause_trigger.\n");
 
-      int cur_clk_mode;
-      if (s_player_info.file.track.sampling_rate <= AS_SAMPLINGRATE_48000)
-        {
-          cur_clk_mode = AS_CLKMODE_NORMAL;
-        }
-      else
-        {
-          cur_clk_mode = AS_CLKMODE_HIRES;
-        }
+            if (!app_open_next_play_file())
+              {
+                /* Abnormal termination processing */
 
-      /* If clockmode is Hi-Res and player mode is not Hi-Res,
-       * play the next file.
-       */
+                goto errout_open_next_play_file;
+              }
 
-#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_MODE_NORMAL2
-      if (cur_clk_mode == AS_CLKMODE_HIRES)
-        {
-          printf("Hi-Res file is not supported.\n"
-                 "Please change player mode to Hi-Res with config.\n");
-          app_close_play_file();
+            /* Get current clock mode.
+            * If the sampling rate is less than 48 kHz,
+            * it will be in Normal mode. Otherwise, Hi-Res mode is set.
+            */
 
-          /* Play next file. */
+            int cur_clk_mode;
+            if (s_player_info.file.track.sampling_rate <= AS_SAMPLINGRATE_48000)
+              {
+                cur_clk_mode = AS_CLKMODE_NORMAL;
+              }
+            else
+              {
+                cur_clk_mode = AS_CLKMODE_HIRES;
+              }
 
-          continue;
-        }
-#endif
+            /* If clockmode is Hi-Res and player mode is not Hi-Res,
+            * play the next file.
+            */
 
-      /* If current clock mode is different from the previous clock mode,
-       * perform initial setting.
-       */
+      #ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_MODE_NORMAL2
+            if (cur_clk_mode == AS_CLKMODE_HIRES)
+              {
+                printf("Hi-Res file is not supported.\n"
+                      "Please change player mode to Hi-Res with config.\n");
+                app_close_play_file();
 
-      if (clk_mode != cur_clk_mode)
-        {
-          /* Update clock mode. */
+                /* Play next file. */
 
-          clk_mode = cur_clk_mode;
+                continue;
+              }
+      #endif
 
-          /* Since the initial setting is required to be in the Ready state,
-           * if it is not in the Ready state, it is set to the Ready state.
-           */
+            /* If current clock mode is different from the previous clock mode,
+            * perform initial setting.
+            */
 
-          if (AS_MNG_STATUS_READY != app_get_status())
+            if (clk_mode != cur_clk_mode)
+              {
+                /* Update clock mode. */
+
+                clk_mode = cur_clk_mode;
+
+                /* Since the initial setting is required to be in the Ready state,
+                * if it is not in the Ready state, it is set to the Ready state.
+                */
+
+                if (AS_MNG_STATUS_READY != app_get_status())
+                  {
+                    if (board_external_amp_mute_control(true) != OK)
+                      {
+                        printf("Error: board_external_amp_mute_control(true) failuer.\n");
+
+                        /* Abnormal termination processing */
+
+                        goto errout_amp_mute_control;
+                      }
+
+                    if (!app_set_ready())
+                      {
+                        printf("Error: app_set_ready() failure.\n");
+
+                        /* Abnormal termination processing */
+
+                        goto errout_set_ready_status;
+                      }
+                  }
+
+                /* Set the clock mode of the output function. */
+
+                if (!app_set_clkmode(clk_mode))
+                  {
+                    printf("Error: app_set_clkmode() failure.\n");
+
+                    /* Abnormal termination processing */
+
+                    goto errout_set_clkmode;
+                  }
+
+                /* Set player operation mode. */
+
+                if (!app_set_player_status())
+                  {
+                    printf("Error: app_set_player_status() failure.\n");
+
+                    /* Abnormal termination processing */
+
+                    goto errout_set_player_status;
+                  }
+
+                /* Init OutputMixer. */
+
+                if (!app_init_outputmixer())
+                  {
+                    printf("Error: app_init_outputmixer() failure.\n");
+
+                    goto errout_init_outputmixer;
+                  }
+
+      #ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2
+                /* Init Postproc. */
+
+                if (!app_send_initpostproc_command())
+                  {
+                    printf("Error: app_send_initpostproc_command() failure.\n");
+
+                    goto errout_init_postproc;
+                  }
+      #endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2 */
+
+                /* Cancel output mute. */
+
+                app_set_volume(PLAYER_DEF_VOLUME);
+
+                if (board_external_amp_mute_control(false) != OK)
+                  {
+                    printf("Error: board_external_amp_mute_control(false) failuer.\n");
+
+                    /* Abnormal termination processing */
+
+                    goto errout_amp_mute_control;
+                  }
+              }
+
+          /* Running... */
+//          printf("Running time is %d sec\n", PLAYER_PLAY_TIME);
+
+            /* Start player operation. */
+            if (!app_start())
+              {
+                printf("Error: app_start_player() failure.\n");
+
+                /* Abnormal termination processing */
+                goto errout_start;
+              }
+            game_state = PLAY;
+            printf("state:stop goto play state.\n");
+          }
+          break;
+
+        case PLAY:
+          music_play_time = 3 + rand() % 8;
+          app_play_process(music_play_time, &game_event);
+          if (game_event == MUSIC_PAUSE) {
+            if (!app_pause())
             {
-              if (board_external_amp_mute_control(true) != OK)
-                {
-                  printf("Error: board_external_amp_mute_control(true) failuer.\n");
-
-                  /* Abnormal termination processing */
-
-                  goto errout_amp_mute_control;
-                }
-
-              if (!app_set_ready())
-                {
-                  printf("Error: app_set_ready() failure.\n");
-
-                  /* Abnormal termination processing */
-
-                  goto errout_set_ready_status;
-                }
+              printf("Error: app_pause() failure.\n");
+              goto errout_start;
             }
+            game_state = PAUSE;
+            printf("state:play goto pause state.\n");
+          } else if (game_event == MUSIC_END) {
+            /* Stop player operation. */
+            if (!app_stop()) {
+                printf("Error: app_stop() failure.\n");
+                return 1;
+            }
+            game_state = STOP;
+            printf("state:play goto stop state.\n");
+          }
+          break;
 
-          /* Set the clock mode of the output function. */
+        case PAUSE:
+          if (play_or_pause_trigger) {
+            play_or_pause_trigger = false;
 
-          if (!app_set_clkmode(clk_mode))
+            if (!replay())
             {
-              printf("Error: app_set_clkmode() failure.\n");
-
-              /* Abnormal termination processing */
-
-              goto errout_set_clkmode;
+              printf("Error: replay() failure.\n");
+              goto errout_start;
             }
+            game_state = PLAY;
+            printf("state:pause goto play state.\n");
+          }
+          break;
 
-          /* Set player operation mode. */
-
-          if (!app_set_player_status())
-            {
-              printf("Error: app_set_player_status() failure.\n");
-
-              /* Abnormal termination processing */
-
-              goto errout_set_player_status;
-            }
-
-          /* Init OutputMixer. */
-
-          if (!app_init_outputmixer())
-            {
-              printf("Error: app_init_outputmixer() failure.\n");
-
-              goto errout_init_outputmixer;
-            }
-
-#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2
-          /* Init Postproc. */
-
-          if (!app_send_initpostproc_command())
-            {
-              printf("Error: app_send_initpostproc_command() failure.\n");
-
-              goto errout_init_postproc;
-            }
-#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC2 */
-
-           /* Cancel output mute. */
-
-           app_set_volume(PLAYER_DEF_VOLUME);
-
-          if (board_external_amp_mute_control(false) != OK)
-            {
-              printf("Error: board_external_amp_mute_control(false) failuer.\n");
-
-              /* Abnormal termination processing */
-
-              goto errout_amp_mute_control;
-            }
-        }
-
-      /* Start player operation. */
-      if (!app_start())
-        {
-          printf("Error: app_start_player() failure.\n");
-
-          /* Abnormal termination processing */
-
-          goto errout_start;
-        }
-
-      /* Running... */
-
-      printf("Running time is %d sec\n", PLAYER_PLAY_TIME);
-
-      app_play_process(PLAYER_PLAY_TIME);
-
-      /* Stop player operation. */
-      if (!app_stop())
-        {
-          printf("Error: app_stop() failure.\n");
-          return 1;
-        }
+        default:
+          break;
+      }
 
       if (exit_app) {
         exit_app = false;
+        if (!app_stop()) {
+            printf("Error: app_stop() failure.\n");
+            return 1;
+        }
+        game_state = STOP;
+        printf("exit switch pressed. goto exit.\n");
         break;
       }
 #ifndef CONFIG_AUDIOUTILS_PLAYLIST
