@@ -58,6 +58,7 @@ void shooting_process(uint32_t play_time)
 int main(int argc, FAR char *argv[])
 {
   int one_time_counter = 0;
+  int game_coundown; 
 
   shooting_watch_gpio_create();
   board_gpio_write(USER_LED_1, 1);
@@ -69,7 +70,7 @@ int main(int argc, FAR char *argv[])
     switch (game_state) {
     case STOP:
       if (one_time_counter == 0) {
-        printf("----- Press SW2 to start the game.-----\n");
+        printf("----- Press SW2 to start the game. When the game starts, shoot SW1 continuously.-----\n");
         printf("----- Press SW1 and SW2 to end the game.-----\n");
         one_time_counter = 1;
       }
@@ -86,8 +87,10 @@ int main(int argc, FAR char *argv[])
       break;
 
     case PRE_SHOOTING:
-      printf("Ready....\n");
-      sleep(3);
+      for (game_coundown = 3; game_coundown > 0; game_coundown--) {
+        printf("%d...\n", game_coundown);
+        sleep(1);
+      }
       shooting_count = 0;
       game_state = SHOOTING;
       break;

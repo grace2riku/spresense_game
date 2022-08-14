@@ -4,8 +4,8 @@
 #
 
 config EXAMPLES_AUDIO_PLAYER2
-	tristate "Audio player example"
-	default n
+	tristate "musical chairs"
+	default y
 	depends on CXD56_AUDIO
 	---help---
 		Enable the audio player example
@@ -49,10 +49,10 @@ config EXAMPLES_AUDIO_PLAYER_PROGNAME2
 	default "musical_chairs"
 
 config EXAMPLES_AUDIO_PLAYER_PRIORITY2
-	int "Audio player task priority"
+	int "musical chairs task priority"
 	default 150
 
 config EXAMPLES_AUDIO_PLAYER_STACKSIZE2
-	int "Audio player stack size"
+	int "musical chairs stack size"
 	default 2048
 endif
