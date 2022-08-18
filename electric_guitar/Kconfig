@@ -1,25 +1,29 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
 
-config SPRESENSE_GAME_ELECTRIC_GUITAR
-	tristate "electric_guitar"
+config EXAMPLES_SIXAXIS_2
+	bool "electric_guitar"
 	default y
 	---help---
-		Enable the electric_guitar app
+		Enable the 6 axis sensor example
 
-if SPRESENSE_GAME_ELECTRIC_GUITAR
+if EXAMPLES_SIXAXIS_2
 
-config SPRESENSE_GAME_ELECTRIC_GUITAR_PROGNAME
+config EXAMPLES_SIXAXIS_PROGNAME_2
 	string "Program name"
 	default "electric_guitar"
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.
 
-config SPRESENSE_GAME_ELECTRIC_GUITAR_PRIORITY
+config EXAMPLES_SIXAXIS_PRIORITY_2
 	int "electric_guitar task priority"
 	default 100
 
-config SPRESENSE_GAME_ELECTRIC_GUITAR_STACKSIZE
+config EXAMPLES_SIXAXIS_STACKSIZE_2
 	int "electric_guitar stack size"
-	default 2048
+	default DEFAULT_TASK_STACKSIZE
 
 endif
