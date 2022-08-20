@@ -43,7 +43,7 @@ PRIORITY = $(CONFIG_EXAMPLES_SIXAXIS_PRIORITY_2)
 STACKSIZE = $(CONFIG_EXAMPLES_SIXAXIS_STACKSIZE_2)
 
 # sixaxis Example
-
+CSRCS = electric_guitar_gpio.c
 MAINSRC = sixaxis_main.c
 
 include $(APPDIR)/Application.mk

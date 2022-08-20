@@ -44,6 +44,9 @@
 
 #include <nuttx/sensors/bmi160.h>
 
+#include <arch/board/board.h>
+#include <arch/chip/pin.h>
+
 #include <stdlib.h>
 #include <math.h>
 
@@ -53,11 +56,32 @@
 
 #define ACC_DEVPATH      "/dev/accel0"
 
-#define rad_to_deg(a) (a/M_PI*180)
+// APS学習ボードピンアサイン
+#define SWITCH_1    (39)
+
+#define PIN_LED0  (PIN_I2S1_BCK)
+#define PIN_LED1  (PIN_I2S1_LRCK)
+#define PIN_LED2  (PIN_I2S1_DATA_IN)
+#define PIN_LED3  (PIN_I2S1_DATA_OUT)
+
+// 
+const int spresense_main_board_led_pin[4] = {
+  PIN_LED0,
+  PIN_LED1,
+  PIN_LED2,
+  PIN_LED3
+};
+
+#define SPRESENSE_MAIN_BOARD_LED_TURN_ON    (1)
+#define SPRESENSE_MAIN_BOARD_LED_TURN_OFF   (0)
+
 
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
+extern void electric_guitar_gpio_create(void);
+extern void electric_guitar_gpio_destroy(void);
+
 
 float convertRawGyro(int gRaw) {
   // since we are using 2000 degrees/seconds range
@@ -66,6 +90,47 @@ float convertRawGyro(int gRaw) {
   float g = (gRaw * 2000.0) / 32768.0;
 
   return g;
+}
+
+
+extern bool exit_electric_guitar;
+
+void play(float degree) {
+  int i = 0;
+  int sw1_status = board_gpio_read(SWITCH_1);  
+
+  if (!sw1_status) {
+    if (0 <= degree && degree < 20) {
+      // TODO: ドを鳴らす
+
+      board_gpio_write(PIN_LED0, SPRESENSE_MAIN_BOARD_LED_TURN_ON);
+      board_gpio_write(PIN_LED1, SPRESENSE_MAIN_BOARD_LED_TURN_OFF);
+      board_gpio_write(PIN_LED2, SPRESENSE_MAIN_BOARD_LED_TURN_OFF);
+      board_gpio_write(PIN_LED3, SPRESENSE_MAIN_BOARD_LED_TURN_OFF);
+    } else if (35 <= degree && degree < 55) {
+      // TODO: レを鳴らす
+
+      board_gpio_write(PIN_LED0, SPRESENSE_MAIN_BOARD_LED_TURN_OFF);
+      board_gpio_write(PIN_LED1, SPRESENSE_MAIN_BOARD_LED_TURN_ON);
+      board_gpio_write(PIN_LED2, SPRESENSE_MAIN_BOARD_LED_TURN_OFF);
+      board_gpio_write(PIN_LED3, SPRESENSE_MAIN_BOARD_LED_TURN_OFF);
+    } else if (70 <= degree && degree < 90) {
+      // TODO: ミを鳴らす
+
+      board_gpio_write(PIN_LED0, SPRESENSE_MAIN_BOARD_LED_TURN_OFF);
+      board_gpio_write(PIN_LED1, SPRESENSE_MAIN_BOARD_LED_TURN_OFF);
+      board_gpio_write(PIN_LED2, SPRESENSE_MAIN_BOARD_LED_TURN_ON);
+      board_gpio_write(PIN_LED3, SPRESENSE_MAIN_BOARD_LED_TURN_OFF);
+    } else {
+      for (i = 0; i < 4; i++) {
+        board_gpio_write(spresense_main_board_led_pin[i], SPRESENSE_MAIN_BOARD_LED_TURN_ON);
+      }
+    }
+  } else {
+    for (i = 0; i < 4; i++) {
+      board_gpio_write(spresense_main_board_led_pin[i], SPRESENSE_MAIN_BOARD_LED_TURN_OFF);
+    }
+  }
 }
 
 /****************************************************************************
@@ -84,13 +149,18 @@ int main(int argc, FAR char *argv[])
   volatile float pre_gx, pre_gy, pre_gz;
   int print_display_count;
 
+  electric_guitar_gpio_create();
+
+  for (int i = 0; i < 4; i++) {
+    board_gpio_config(spresense_main_board_led_pin[i], 0, true, true, PIN_FLOAT);
+    board_gpio_write(spresense_main_board_led_pin[i], SPRESENSE_MAIN_BOARD_LED_TURN_OFF);
+  }
 
   fd = open(ACC_DEVPATH, O_RDONLY);
-  if (fd < 0)
-    {
+  if (fd < 0) {
       printf("Device %s open failure. %d\n", ACC_DEVPATH, fd);
       return -1;
-    }
+  }
 
   prev = 0;
   degree_x = degree_y = degree_z = 0;
@@ -98,22 +168,18 @@ int main(int argc, FAR char *argv[])
   pre_gx = pre_gy = pre_gz = 0;
   print_display_count = 0;
 
-  for (; ; )
-    {
+  for (; ; ) {
       int ret;
 
       ret = read(fd, &data, sizeof(struct accel_gyro_st_s));
-      if (ret != sizeof(struct accel_gyro_st_s))
-        {
+      if (ret != sizeof(struct accel_gyro_st_s)) {
           fprintf(stderr, "Read failed.\n");
           break;
-        }
+      }
 
 
       /* If sensing time has been changed, show 6 axis data. */
-
-      if (prev != data.sensor_time)
-        {
+      if (prev != data.sensor_time) {
           dt = (abs(data.sensor_time - prev) * 10) / 1000.0; // sensor_time count resolution: 10ms
           prev = data.sensor_time;
 
@@ -132,10 +198,6 @@ int main(int argc, FAR char *argv[])
           pre_gx = gx;
           pre_gy = gy;
           pre_gz = gz;
-
-//          degree_x = rad_to_deg(rad_x);
-//          degree_y = rad_to_deg(rad_y);
-//          degree_z = rad_to_deg(rad_z);
 
           ++print_display_count;
           if (print_display_count >= 100) {
@@ -156,15 +218,20 @@ int main(int argc, FAR char *argv[])
             fflush(stdout);
           }
 
-        }
+      }
 
       usleep(10000);
-//      sleep(1);
 
+      play(fabsf(degree_z));
 
-    }
+      if (exit_electric_guitar) break;
+  }
+
+  exit_electric_guitar = false;
 
   close(fd);
+
+  electric_guitar_gpio_destroy();
 
   return 0;
 }
