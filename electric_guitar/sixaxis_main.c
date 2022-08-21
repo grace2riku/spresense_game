@@ -75,12 +75,21 @@ const int spresense_main_board_led_pin[4] = {
 #define SPRESENSE_MAIN_BOARD_LED_TURN_ON    (1)
 #define SPRESENSE_MAIN_BOARD_LED_TURN_OFF   (0)
 
+#define BEEP_FREQUENCY_DO (262)
+#define BEEP_FREQUENCY_RE (294)
+#define BEEP_FREQUENCY_MI (330)
+#define BEEP_NONE         (0)
+
 
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
 extern void electric_guitar_gpio_create(void);
 extern void electric_guitar_gpio_destroy(void);
+
+extern int audio_beep_create(void);
+extern int audio_beep_destroy(void);
+extern int audio_beep(int frequency);
 
 
 float convertRawGyro(int gRaw) {
@@ -101,21 +110,27 @@ void play(float degree) {
 
   if (!sw1_status) {
     if (0 <= degree && degree < 20) {
-      // TODO: ドを鳴らす
+      if (audio_beep(BEEP_FREQUENCY_DO) != 0) {
+        printf("audio_beep(BEEP_FREQUENCY_DO) failure.\n");
+      }
 
       board_gpio_write(PIN_LED0, SPRESENSE_MAIN_BOARD_LED_TURN_ON);
       board_gpio_write(PIN_LED1, SPRESENSE_MAIN_BOARD_LED_TURN_OFF);
       board_gpio_write(PIN_LED2, SPRESENSE_MAIN_BOARD_LED_TURN_OFF);
       board_gpio_write(PIN_LED3, SPRESENSE_MAIN_BOARD_LED_TURN_OFF);
     } else if (35 <= degree && degree < 55) {
-      // TODO: レを鳴らす
+      if (audio_beep(BEEP_FREQUENCY_RE) != 0) {
+        printf("audio_beep(BEEP_FREQUENCY_RE) failure.\n");
+      }
 
       board_gpio_write(PIN_LED0, SPRESENSE_MAIN_BOARD_LED_TURN_OFF);
       board_gpio_write(PIN_LED1, SPRESENSE_MAIN_BOARD_LED_TURN_ON);
       board_gpio_write(PIN_LED2, SPRESENSE_MAIN_BOARD_LED_TURN_OFF);
       board_gpio_write(PIN_LED3, SPRESENSE_MAIN_BOARD_LED_TURN_OFF);
     } else if (70 <= degree && degree < 90) {
-      // TODO: ミを鳴らす
+      if (audio_beep(BEEP_FREQUENCY_MI) != 0) {
+        printf("audio_beep(BEEP_FREQUENCY_MI) failure.\n");
+      }
 
       board_gpio_write(PIN_LED0, SPRESENSE_MAIN_BOARD_LED_TURN_OFF);
       board_gpio_write(PIN_LED1, SPRESENSE_MAIN_BOARD_LED_TURN_OFF);
@@ -127,6 +142,9 @@ void play(float degree) {
       }
     }
   } else {
+    if (audio_beep(BEEP_NONE) != 0) {
+      printf("audio_beep(NONE) failure.\n");
+    }
     for (i = 0; i < 4; i++) {
       board_gpio_write(spresense_main_board_led_pin[i], SPRESENSE_MAIN_BOARD_LED_TURN_OFF);
     }
@@ -148,6 +166,11 @@ int main(int argc, FAR char *argv[])
   volatile float gx, gy, gz;
   volatile float pre_gx, pre_gy, pre_gz;
   int print_display_count;
+
+  if (audio_beep_create() != 0) {
+      printf("audio_beep_create() failure.\n");
+      return -1;
+  }
 
   electric_guitar_gpio_create();
 
@@ -232,6 +255,11 @@ int main(int argc, FAR char *argv[])
   close(fd);
 
   electric_guitar_gpio_destroy();
+
+  if (audio_beep_destroy() != 0) {
+      printf("audio_beep_destroy() failure.\n");
+      return -1;
+  }
 
   return 0;
 }

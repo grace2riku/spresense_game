@@ -46,4 +46,13 @@ STACKSIZE = $(CONFIG_EXAMPLES_SIXAXIS_STACKSIZE_2)
 CSRCS = electric_guitar_gpio.c
 MAINSRC = sixaxis_main.c
 
+CXXSRCS = audio_beep_main.cxx
+
+# Audio Example paths
+AUDIODIR = $(SDKDIR)$(DELIM)modules$(DELIM)audio
+
+# Audio Example flags
+CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AUDIODIR)"}
+CXXFLAGS += -D_POSIX
+
 include $(APPDIR)/Application.mk
