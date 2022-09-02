@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_SIXAXIS_2),y)
+ifneq ($(CONFIG_EXAMPLES_SIXAXIS_2),)
 CONFIGURED_APPS += electric_guitar
 endif

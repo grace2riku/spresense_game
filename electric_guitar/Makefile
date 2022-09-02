@@ -34,13 +34,14 @@
 ############################################################################
 
 include $(APPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
+include $(SDKDIR)/Make.defs
 
 # sixaxis built-in application info
 
 PROGNAME = $(CONFIG_EXAMPLES_SIXAXIS_PROGNAME_2)
 PRIORITY = $(CONFIG_EXAMPLES_SIXAXIS_PRIORITY_2)
 STACKSIZE = $(CONFIG_EXAMPLES_SIXAXIS_STACKSIZE_2)
+MODULE = $(CONFIG_EXAMPLES_SIXAXIS_2)
 
 # sixaxis Example
 CSRCS = electric_guitar_gpio.c

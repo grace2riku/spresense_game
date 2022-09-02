@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_SIXAXIS_2
-	bool "electric_guitar"
+	tristate "electric_guitar"
 	default y
 	---help---
 		Enable the 6 axis sensor example
