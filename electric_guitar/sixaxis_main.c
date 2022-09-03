@@ -229,6 +229,9 @@ int main(int argc, FAR char *argv[])
             printf("\033[2J");  // 画面クリア
             printf("\033[%d;%dH", 0, 0);  // 移動 高さ, 横
 
+            printf("----- If you tilt the board while pressing SW1, you will hear a do-re-mi sound.-----\n");
+            printf("----- Press SW1 and SW2 to end the game.-----\n");
+
             printf("[%" PRIu32 "] %d, %d, %d / %d, %d, %d\n",
                   data.sensor_time,
                   data.gyro.x, data.gyro.y, data.gyro.z,

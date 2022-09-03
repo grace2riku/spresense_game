@@ -1196,7 +1196,9 @@ extern "C" int main(int argc, FAR char *argv[])
 
   int clk_mode = -1;
 
-  printf("Start AudioPlayer example 2\n");
+  printf("Start musical_chairs.\n");
+  printf("----- Press SW2 to play music.-----\n");
+  printf("----- Press SW1 and SW2 to end the game.-----\n");
 
   /* First, initialize the shared memory and memory utility used by AudioSubSystem. */
 
@@ -1574,7 +1576,7 @@ errout_act_audio_sub_system:
 
   gpio_destroy();
 
-  printf("Exit AudioPlayer example\n");
+  printf("Exit musical_chairs.\n");
 
   return 0;
 }
