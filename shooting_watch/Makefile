@@ -8,7 +8,7 @@ STACKSIZE = $(CONFIG_SPRESENSE_GAME_SHOOTING_WATCH_STACKSIZE)
 MODULE = $(CONFIG_SPRESENSE_GAME_SHOOTING_WATCH)
 
 ASRCS =
-CSRCS = shooting_watch_gpio.c
-MAINSRC = shooting_watch_main.c
+CSRCS = aps_lerning_board_bsp.c game.c initialize.c controller.c shooting_count.c
+MAINSRC = main.c
 
 include $(APPDIR)/Application.mk
